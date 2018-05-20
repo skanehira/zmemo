@@ -1,0 +1,8 @@
+appname: zmemo
+port: 8080
+db:
+    name:     zmemo
+    user:     zmemo
+    password: zmemo
+    port:     3306
+    host:     0.0.0.0
