@@ -32,8 +32,12 @@ func main() {
 	flag.Parse()
 	if len(flag.Args()) > 0 {
 		if "migrate" == flag.Args()[0] {
-			fmt.Println("db migrate")
-			db.AutoMigrate(User{})
+			fmt.Println("db migreate…")
+			if err := db.AutoMigrate(User{}).Error; err != nil {
+				panic(err)
+			}
+
+			db.AutoMigrate(Memo{}).AddForeignKey("user_id", "users(user_id)", "RESTRICT", "RESTRICT")
 		}
 		os.Exit(0)
 	}
