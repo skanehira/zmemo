@@ -9,7 +9,7 @@ type User struct {
 	UserID    string  `gorm:"primary_key";json:"userId"`
 	UserName  string  `gorm:"not null";json:"userName"`
 	Password  string  `gorm:"not null";json:"password"`
-	CreateAt  string  `gorm:"not null";json:"createAt"`
+	CreatedAt string  `gorm:"not null";json:"createAt"`
 	UpdatedAt string  `gorm:"not null";json:"updateaAt"`
 	DeletedAt *string `gorm:"null";json:"-"`
 }
@@ -30,10 +30,10 @@ func (d *UserDB) Create(user User) (User, error) {
 
 	// 初期値
 	user.UserID = uuid.String()
-	user.CreateAt = GetTime()
+	user.CreatedAt = GetTime()
 	user.UpdatedAt = GetTime()
 
-	if err := d.DB.Create(&user).Scan(&user).Error; err != nil {
+	if err := d.DB.Create(&user).Find(&user).Error; err != nil {
 		return user, err
 	}
 
