@@ -10,12 +10,13 @@ import (
 type date time.Time
 
 type Memo struct {
-	UserID    string  `gorm:"primary_key";json:"userId"`
-	MemoID    string  `gorm:"primary_key";json:"memoId"`
-	Text      string  `gorm:"not null";json:"text"`
-	CreatedAt string  `gorm:"not null";json:"createAt"`
-	UpdatedAt string  `gorm:"not null";json:"updateAt"`
-	DeletedAt *string `gorm:"null";json:"-"`
+	UserID     string  `gorm:"primary_key";json:"userId"`
+	MemoID     string  `gorm:"primary_key";json:"memoId"`
+	FolderName string  `gorm:"primary_key";json:"folderName"`
+	Text       string  `gorm:"not null";json:"text"`
+	CreatedAt  string  `gorm:"not null";json:"createAt"`
+	UpdatedAt  string  `gorm:"not null";json:"updateAt"`
+	DeletedAt  *string `gorm:"null";json:"-"`
 }
 
 type Memos []Memo

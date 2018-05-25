@@ -38,6 +38,7 @@ func main() {
 			}
 
 			db.AutoMigrate(Memo{}).AddForeignKey("user_id", "users(user_id)", "RESTRICT", "RESTRICT")
+			db.AutoMigrate(Folder{}).AddForeignKey("user_id", "users(user_id)", "RESTRICT", "RESTRICT")
 		}
 		os.Exit(0)
 	}
