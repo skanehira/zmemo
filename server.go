@@ -13,6 +13,8 @@ type Server struct {
 func (s *Server) Start() {
 	e := echo.New()
 
+	e.Static("/", "public")
+
 	// ユーザAPI
 	e.POST("/users", s.CreateUser())
 	e.GET("/users", s.GetUsers())
