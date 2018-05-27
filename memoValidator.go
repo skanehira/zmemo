@@ -3,11 +3,11 @@ package main
 func memoValidation(memo Memo) error {
 
 	if memo.UserID == "" {
-		return NotFuondMemoID
+		return NotFoundUserID
 	}
 
 	if !isUUID.MatchString(memo.UserID) {
-		return InvalidMemoID
+		return InvalidUserID
 	}
 
 	if memo.Text == "" {

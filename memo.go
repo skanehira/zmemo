@@ -1,9 +1,11 @@
 package main
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -12,7 +14,7 @@ type date time.Time
 type Memo struct {
 	UserID     string  `gorm:"primary_key";json:"userId"`
 	MemoID     string  `gorm:"primary_key";json:"memoId"`
-	FolderName string  `gorm:"primary_key";json:"folderName"`
+	FolderName string  `gorm:"unique;not null";json:"folderName"`
 	Text       string  `gorm:"not null";json:"text"`
 	CreatedAt  string  `gorm:"not null";json:"createAt"`
 	UpdatedAt  string  `gorm:"not null";json:"updateAt"`
@@ -86,4 +88,39 @@ func (m *MemoDB) GetMemo(userId, memoId string) (Memo, error) {
 	}
 
 	return memo, nil
+}
+
+func (s *Server) AddMemoToFolder() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		memo := struct {
+			UserID     string
+			FolderName string
+			MemoID     string
+		}{
+			c.Param("userId"),
+			c.Param("folderName"),
+			c.QueryParam("memoId"),
+		}
+
+		if err := c.Bind(&memo); err != nil {
+			return c.JSON(GetErrorCode(InvalidPostData), Message{InvalidPostData.Error()})
+		}
+
+		// バリデーション
+		if err := folderValidation(memo.UserID, memo.FolderName); err != nil {
+			return c.JSON(GetErrorCode(err), Message{err.Error()})
+		}
+
+		if !isValidMemoId(memo.MemoID) {
+			return c.JSON(GetErrorCode(InvalidMemoID), Message{InvalidMemoID.Error()})
+		}
+
+		db := FolderDB{s.DB}
+		if err := db.AddMemoToFolder(memo.UserID, memo.MemoID, memo.FolderName); err != nil {
+			return c.JSON(GetErrorCode(err), Message{err.Error()})
+		}
+
+		return c.NoContent(http.StatusOK)
+
+	}
 }
