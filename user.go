@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 )
@@ -34,6 +36,10 @@ func (d *UserDB) Create(user User) (User, error) {
 	user.UpdatedAt = GetTime()
 
 	if err := d.DB.Create(&user).Find(&user).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			log.Println("error: " + NotFoundUser.Error())
+			return user, NotFoundUser
+		}
 		return user, err
 	}
 
@@ -54,13 +60,15 @@ func (d *UserDB) Update(user User) (User, error) {
 	db := d.DB.Find(&user)
 	if err := db.Error; err != nil {
 		if gorm.IsRecordNotFoundError(db.Error) {
+			log.Println("error: " + NotFoundUser.Error())
 			return user, NotFoundUser
 		}
 
 		return user, db.Error
 	}
 
-	// updatesを使用するとcall_backでupdate_atが自動更新されるので
+	// updatesを使用するとcall_backでupdate_atが自動更新される
+	// http://doc.gorm.io/crud.html#update
 	// UpdateColumnsを使用することで回避できる
 	if err := db.Model(user).UpdateColumns(newUser).Find(&user).Error; err != nil {
 		return User{}, err
@@ -83,7 +91,14 @@ func (d *UserDB) Delete(userId string) error {
 		return db.Error
 	}
 
-	if err := db.Delete(&user).Error; err != nil {
+	// フォルダ・メモ・ユーザを削除
+	sql := "update users u, folders f, memos m set u.deleted_at = ?, f.deleted_at = ?, m.deleted_at = ? " +
+		"where u.user_id = f.user_id and u.user_id = m.user_id and u.user_id = ?"
+
+	time := GetTime()
+
+	if err := db.Exec(sql, time, time, time, userId).Error; err != nil {
+		log.Println("error: " + err.Error())
 		return err
 	}
 
@@ -98,6 +113,7 @@ func (d *UserDB) GetUser(userId string) (User, error) {
 	// ユーザが存在しない or 削除済みの場合はエラー
 	if err := d.DB.Find(&user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
+			log.Println("error: " + NotFoundUser.Error())
 			return user, NotFoundUser
 		}
 		return user, err
@@ -116,6 +132,7 @@ func (d *UserDB) UpdatePassword(user User) error {
 	db := d.DB.Find(&user)
 	if db.Error != nil {
 		if gorm.IsRecordNotFoundError(db.Error) {
+			log.Println("error: " + NotFoundUser.Error())
 			return NotFoundUser
 		}
 		return db.Error
@@ -133,6 +150,7 @@ func (d *UserDB) GetUsers() (Users, error) {
 	users := new(Users)
 
 	if err := d.DB.Find(users).Error; err != nil {
+		log.Println("error: " + err.Error())
 		return *users, err
 	}
 
