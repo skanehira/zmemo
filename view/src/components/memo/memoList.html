@@ -1,0 +1,13 @@
+<div>
+    <el-row class="scroll-container">
+        <el-col :span="8" v-for="(memo, key) in memoList" :key="key">
+            <el-card class="box-card" shadow="hover" draggable="true" @dragstart="dragstart(item, $event)" @dragend="dragend" @dragenter="dragenter(item)">
+                <div slot="header">
+                    <span>{{memo.title}}</span>
+                    <el-button style="float: right; padding: 3px 0" type="text" @click="deleteMemo(memo)">削除</el-button>
+                </div>
+                {{memo.text}}
+            </el-card>
+        </el-col>
+    </el-row>
+</div>

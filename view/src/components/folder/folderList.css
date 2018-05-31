@@ -1,0 +1,26 @@
+.z-card-list  {
+    /* flexコンテナ
+        https://kuzlog.com/2017/01/18/495/
+     */
+    display: flex;
+    /* flexコンテナからはみ出すときは開業する */
+    flex-wrap: wrap;
+}
+
+.el-card {
+    word-wrap: break-word;
+    margin: 2.5%;
+    height: 60px;
+    /* 改行をそのまま表示 */
+    white-space: pre-line;
+}
+
+/* スクロールコンテナ */
+.scroll-container {
+    height: 90vh;
+    overflow-y: scroll;
+}
+
+.scroll-container >>> .el-card__header {
+    background-color: aliceblue;
+}

@@ -7,8 +7,6 @@ import (
 
 var (
 	// ユーザ系エラー
-	NotFoundUserID    = errors.New("ユーザIDがありません")
-	InvalidUserID     = errors.New("ユーザIDが正しくありません")
 	NotFoundUserName  = errors.New("ユーザ名がありません")
 	InvalidUserName   = errors.New("英数字のみを使用して下さい")
 	NotFoundPassword  = errors.New("パスワードがありません")
@@ -22,6 +20,7 @@ var (
 	NotFuondMemo      = errors.New("メモがありません")
 	NotFoundFolder    = errors.New("フォルダがありません")
 	InvalidFolderName = errors.New("フォルダ名が正しくありません")
+	NotFoundTitle     = errors.New("タイトルがありません")
 
 	InvalidPostData = errors.New("データ形式が正しくありません")
 )
@@ -29,10 +28,10 @@ var (
 // エラー型からレスポンスコードを取得
 func GetErrorCode(err error) int {
 	switch err {
-	case NotFoundUserID, InvalidUserID, NotFoundUserName, InvalidUserName,
+	case NotFoundUserName, InvalidUserName,
 		NotFoundDate, InvalidDate, NotFoundPassword, InvalidPassword,
 		InvalidPostData, NotFuondMemoID, InvalidMemoID, InvalidMemo, NotFuondMemo,
-		InvalidFolderName:
+		InvalidFolderName, NotFoundTitle:
 		return http.StatusBadRequest
 	case NotFoundUser, NotFuondMemo, NotFoundFolder:
 		return http.StatusNotFound

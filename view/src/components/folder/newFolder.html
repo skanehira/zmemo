@@ -1,0 +1,13 @@
+<div>
+    <el-dialog title="新しいフォルダ" :visible.sync="isVisible" @close="close" :show-close="false" :close-on-press-escape="false" width="500px">
+        <el-form :model="folder">
+            <el-form-item label="フォルダ名" :label-width="labelwidth">
+                <el-input v-model="folder.folderName" autofocus="true"></el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer">
+            <el-button type="primary" @click="createFolder">登録</el-button>
+            <el-button @click="close">キャンセル</el-button>
+        </span>
+    </el-dialog>
+</div>

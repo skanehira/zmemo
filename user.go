@@ -4,16 +4,14 @@ import (
 	"log"
 
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
 )
 
 type User struct {
-	UserID    string  `gorm:"primary_key";json:"userId"`
-	UserName  string  `gorm:"not null";json:"userName"`
-	Password  string  `gorm:"not null";json:"password"`
-	CreatedAt string  `gorm:"not null";json:"createAt"`
-	UpdatedAt string  `gorm:"not null";json:"updateaAt"`
-	DeletedAt *string `gorm:"null";json:"-"`
+	UserName  string  `gorm:"primary_key;not null" json:"userName"`
+	Password  string  `gorm:"not null" json:"password"`
+	CreatedAt string  `gorm:"not null" json:"createAt"`
+	UpdatedAt string  `gorm:"not null" json:"updateaAt"`
+	DeletedAt *string `gorm:"null" json:"-"`
 }
 
 type Users []User
@@ -24,14 +22,7 @@ type UserDB struct {
 
 // ユーザ作成
 func (d *UserDB) Create(user User) (User, error) {
-	// ユーザID生成
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		return user, InvalidUserID
-	}
-
 	// 初期値
-	user.UserID = uuid.String()
 	user.CreatedAt = GetTime()
 	user.UpdatedAt = GetTime()
 
@@ -78,9 +69,9 @@ func (d *UserDB) Update(user User) (User, error) {
 }
 
 // ユーザ削除
-func (d *UserDB) Delete(userId string) error {
+func (d *UserDB) Delete(userName string) error {
 
-	user := User{UserID: userId}
+	user := User{UserName: userName}
 
 	// ユーザが存在しない or 削除済みの場合はエラー
 	db := d.DB.Find(&user)
@@ -93,11 +84,11 @@ func (d *UserDB) Delete(userId string) error {
 
 	// フォルダ・メモ・ユーザを削除
 	sql := "update users u, folders f, memos m set u.deleted_at = ?, f.deleted_at = ?, m.deleted_at = ? " +
-		"where u.user_id = f.user_id and u.user_id = m.user_id and u.user_id = ?"
+		"where u.user_name = f.user_name and u.user_name = m.user_name and u.user_name = ?"
 
 	time := GetTime()
 
-	if err := db.Exec(sql, time, time, time, userId).Error; err != nil {
+	if err := db.Exec(sql, time, time, time, userName).Error; err != nil {
 		log.Println("error: " + err.Error())
 		return err
 	}
@@ -106,9 +97,9 @@ func (d *UserDB) Delete(userId string) error {
 }
 
 // ユーザ情報取得
-func (d *UserDB) GetUser(userId string) (User, error) {
+func (d *UserDB) GetUser(userName string) (User, error) {
 
-	user := User{UserID: userId}
+	user := User{UserName: userName}
 
 	// ユーザが存在しない or 削除済みの場合はエラー
 	if err := d.DB.Find(&user).Error; err != nil {
@@ -155,4 +146,19 @@ func (d *UserDB) GetUsers() (Users, error) {
 	}
 
 	return *users, nil
+}
+
+// ログインユーザ情報取得
+func (d *UserDB) GetLoginUser(user User) error {
+
+	// ユーザIDとパスワード
+	if err := d.DB.Model(&user).Where("user_name = ? and password = ?", user.UserName, user.Password).Scan(&user).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			err = NotFoundUser
+		}
+		log.Println("error: " + err.Error())
+		return err
+	}
+
+	return nil
 }

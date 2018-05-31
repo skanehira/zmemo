@@ -1,0 +1,17 @@
+<div>
+    <el-dialog title="新しいメモ" :visible.sync="isVisible" @close="close" :show-close="false" :close-on-press-escape="false">
+        <el-form :model="memo">
+            <el-form-item label="タイトル" :label-width="labelwidth">
+                <el-input v-model="memo.title" autofocus="true"></el-input>
+            </el-form-item>
+            <el-form-item label="メモ" :label-width="labelwidth">
+                <el-input type="textarea" :rows="10" v-model="memo.text">
+                </el-input>
+            </el-form-item>
+        </el-form>
+        <span slot="footer">
+            <el-button type="primary" @click="saveMemo">登録</el-button>
+            <el-button @click="close">キャンセル</el-button>
+        </span>
+    </el-dialog>
+</div>

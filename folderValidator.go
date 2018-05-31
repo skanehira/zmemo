@@ -1,9 +1,9 @@
 package main
 
-func folderValidation(userId, folderName string) error {
+func folderValidation(userName, folderName string) error {
 
-	if !isValidUserId(userId) {
-		return InvalidUserID
+	if !isValidUserName(userName) {
+		return InvalidUserName
 	}
 
 	if folderName == "" {

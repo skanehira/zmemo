@@ -40,8 +40,8 @@ func main() {
 				panic(err)
 			}
 
-			db.AutoMigrate(Memo{}).AddForeignKey("user_id", "users(user_id)", "RESTRICT", "RESTRICT")
-			db.AutoMigrate(Folder{}).AddForeignKey("user_id", "users(user_id)", "RESTRICT", "RESTRICT")
+			db.AutoMigrate(Memo{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
+			db.AutoMigrate(Folder{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 		}
 		os.Exit(0)
 	}

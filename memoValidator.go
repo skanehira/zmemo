@@ -2,12 +2,12 @@ package main
 
 func memoValidation(memo Memo) error {
 
-	if memo.UserID == "" {
-		return NotFoundUserID
+	if !isValidUserName(memo.UserName) {
+		return InvalidUserName
 	}
 
-	if !isUUID.MatchString(memo.UserID) {
-		return InvalidUserID
+	if memo.Title == "" {
+		return NotFoundTitle
 	}
 
 	if memo.Text == "" {
@@ -18,5 +18,5 @@ func memoValidation(memo Memo) error {
 }
 
 func isValidMemoId(memoId string) bool {
-	return isUUID.MatchString(memoId)
+	return isValidUUID(memoId)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -12,11 +13,13 @@ func (s *Server) CreateMemo() echo.HandlerFunc {
 		memo := Memo{}
 
 		if err := c.Bind(&memo); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
 		// メモデータバリデーション
 		if err := memoValidation(memo); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -26,6 +29,7 @@ func (s *Server) CreateMemo() echo.HandlerFunc {
 		newMemo, err := db.CreateMemo(memo)
 
 		if err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -36,23 +40,26 @@ func (s *Server) CreateMemo() echo.HandlerFunc {
 // メモ取得
 func (s *Server) GetMemo() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 		memoId := c.Param("memoId")
 
 		// パラメータバリデーション
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		if !isValidUserName(userName) {
+			log.Println("error: " + InvalidUserName.Error())
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 		if !isValidMemoId(memoId) {
+			log.Println("error: " + InvalidUserName.Error())
 			return c.JSON(GetErrorCode(InvalidMemo), Message{InvalidMemoID.Error()})
 		}
 
 		db := MemoDB{s.DB}
 
 		// メモ取得
-		memo, err := db.GetMemo(userId, memoId)
+		memo, err := db.GetMemo(userName, memoId)
 
 		if err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -63,15 +70,16 @@ func (s *Server) GetMemo() echo.HandlerFunc {
 // メモ一覧取得
 func (s *Server) GetMemos() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 
 		// パラメータバリデーション
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		if !isValidUserName(userName) {
+			log.Println("error: " + InvalidUserName.Error())
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 
 		db := MemoDB{s.DB}
-		memos, err := db.GetMemos(userId)
+		memos, err := db.GetMemos(userName)
 
 		if err != nil {
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
@@ -84,19 +92,22 @@ func (s *Server) GetMemos() echo.HandlerFunc {
 // メモ削除
 func (s *Server) DeleteMemo() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 		memoId := c.Param("memoId")
 
 		// パラメータバリデーション
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		if !isValidUserName(userName) {
+			log.Println("error: " + InvalidUserName.Error())
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 		if !isValidMemoId(memoId) {
+			log.Println("error: " + InvalidMemo.Error())
 			return c.JSON(GetErrorCode(InvalidMemo), Message{InvalidMemoID.Error()})
 		}
 
 		db := MemoDB{s.DB}
-		if err := db.DeleteMemo(userId, memoId); err != nil {
+		if err := db.DeleteMemo(userName, memoId); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 

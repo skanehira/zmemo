@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -11,11 +12,13 @@ func (s *Server) CreateFolder() echo.HandlerFunc {
 		folder := Folder{}
 
 		if err := c.Bind(&folder); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(InvalidPostData), Message{InvalidPostData.Error()})
 		}
 
 		// バリデーション
-		if err := folderValidation(folder.UserID, folder.FolderName); err != nil {
+		if err := folderValidation(folder.UserName, folder.FolderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -23,6 +26,7 @@ func (s *Server) CreateFolder() echo.HandlerFunc {
 		db := FolderDB{s.DB}
 		folder, err := db.CreateFolder(folder)
 		if err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -34,18 +38,20 @@ func (s *Server) CreateFolder() echo.HandlerFunc {
 func (s *Server) GetFolder() echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 		folderName := c.Param("folderName")
 
 		// バリデーション
-		if err := folderValidation(userId, folderName); err != nil {
+		if err := folderValidation(userName, folderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
 		db := FolderDB{s.DB}
-		folder, err := db.GetFolder(userId, folderName)
+		folder, err := db.GetFolder(userName, folderName)
 
 		if err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -56,17 +62,19 @@ func (s *Server) GetFolder() echo.HandlerFunc {
 
 func (s *Server) GetFolders() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 
 		// バリデーション
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		if !isValidUserName(userName) {
+			log.Println("error: " + InvalidUserName.Error())
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 
 		db := FolderDB{s.DB}
-		folders, err := db.GetFolders(userId)
+		folders, err := db.GetFolders(userName)
 
 		if err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -76,17 +84,19 @@ func (s *Server) GetFolders() echo.HandlerFunc {
 
 func (s *Server) UpdateFolderName() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 		folderName := c.Param("folderName")
 
 		// バリデーション
-		if err := folderValidation(userId, folderName); err != nil {
+		if err := folderValidation(userName, folderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
 		db := FolderDB{s.DB}
 
-		if err := db.UpdateFolderName(userId, folderName); err != nil {
+		if err := db.UpdateFolderName(userName, folderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -96,16 +106,18 @@ func (s *Server) UpdateFolderName() echo.HandlerFunc {
 
 func (s *Server) DeleteFolder() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
-		folderName := c.QueryParam("folderName")
+		userName := c.Param("userName")
+		folderName := c.Param("folderName")
 
 		// バリデーション
-		if err := folderValidation(userId, folderName); err != nil {
+		if err := folderValidation(userName, folderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
 		db := FolderDB{s.DB}
-		if err := db.DeleteFolder(userId, folderName); err != nil {
+		if err := db.DeleteFolder(userName, folderName); err != nil {
+			log.Println("error: " + err.Error())
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 

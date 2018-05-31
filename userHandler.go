@@ -43,7 +43,7 @@ func (s *Server) UpdateUser() echo.HandlerFunc {
 		if err := c.Bind(&user); err != nil {
 			return c.JSON(GetErrorCode(InvalidPostData), Message{InvalidPostData.Error()})
 		}
-		user.UserID = c.Param("userId")
+		user.UserName = c.Param("userName")
 
 		// データバリデーション
 		if err := userValidation(user, isUpdate); err != nil {
@@ -65,16 +65,16 @@ func (s *Server) UpdateUser() echo.HandlerFunc {
 // ユーザ削除
 func (s *Server) DeleteUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 
-		// ユーザIDチェック
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		// ユーザ名チェック
+		if !isValidUserName(userName) {
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 
 		// ユーザ削除
 		db := UserDB{s.DB}
-		if err := db.Delete(userId); err != nil {
+		if err := db.Delete(userName); err != nil {
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
 		}
 
@@ -91,7 +91,7 @@ func (s *Server) UpdatePassword() echo.HandlerFunc {
 		if err := c.Bind(&user); err != nil {
 			return c.JSON(GetErrorCode(InvalidPostData), Message{InvalidPostData.Error()})
 		}
-		user.UserID = c.Param("userId")
+		user.UserName = c.Param("userName")
 
 		// データバリデーション
 		if err := userValidation(user, isUpdate); err != nil {
@@ -111,16 +111,16 @@ func (s *Server) UpdatePassword() echo.HandlerFunc {
 // ユーザ情報取得
 func (s *Server) GetUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userName := c.Param("userName")
 
-		// ユーザIDチェック
-		if !isValidUserId(userId) {
-			return c.JSON(GetErrorCode(InvalidUserID), Message{InvalidUserID.Error()})
+		// ユーザ名チェック
+		if !isValidUserName(userName) {
+			return c.JSON(GetErrorCode(InvalidUserName), Message{InvalidUserName.Error()})
 		}
 
 		// ユーザ情報取得
 		db := UserDB{s.DB}
-		user, err := db.GetUser(userId)
+		user, err := db.GetUser(userName)
 
 		if err != nil {
 			return c.JSON(GetErrorCode(err), Message{err.Error()})
@@ -143,5 +143,31 @@ func (s *Server) GetUsers() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, users)
+	}
+}
+
+// ログイン
+func (s *Server) Login() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := User{}
+
+		// jsonデータ取得
+		if err := c.Bind(&user); err != nil {
+			return c.JSON(GetErrorCode(InvalidPostData), Message{InvalidPostData.Error()})
+		}
+
+		// データバリデーション
+		if err := userValidation(user, isCreate); err != nil {
+			return c.JSON(GetErrorCode(err), Message{err.Error()})
+		}
+
+		// ユーザ情報取得
+		db := UserDB{s.DB}
+
+		if err := db.GetLoginUser(user); err != nil {
+			return c.JSON(GetErrorCode(err), Message{err.Error()})
+		}
+
+		return c.JSON(http.StatusOK, user)
 	}
 }

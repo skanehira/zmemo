@@ -18,24 +18,25 @@ func (s *Server) Start() {
 	// ユーザAPI
 	e.POST("/users", s.CreateUser())
 	e.GET("/users", s.GetUsers())
-	e.GET("/users/:userId", s.GetUser())
-	e.PUT("/users/:userId", s.UpdateUser())
-	e.PUT("/users/:userId/password", s.UpdatePassword())
-	e.DELETE("/users/:userId", s.DeleteUser())
+	e.GET("/users/:userName", s.GetUser())
+	e.PUT("/users/:userName", s.UpdateUser())
+	e.PUT("/users/:userName/password", s.UpdatePassword())
+	e.DELETE("/users/:userName", s.DeleteUser())
+	e.POST("/users/login", s.Login())
 
 	// メモAPI
 	e.POST("/memos", s.CreateMemo())
-	e.GET("/memos/:userId/:memoid", s.GetMemo())
-	e.GET("/memos/:userId", s.GetMemos())
-	e.PUT("/memos/:userId/:foldername", s.AddMemoToFolder())
-	e.DELETE("/memos/:userId/:memoid", s.DeleteMemo())
+	e.GET("/memos/:userName/:memoId", s.GetMemo())
+	e.GET("/memos/:userName", s.GetMemos())
+	e.PUT("/memos/:userName/:foldername", s.AddMemoToFolder())
+	e.DELETE("/memos/:userName/:memoId", s.DeleteMemo())
 
 	// フォルダAPI
 	e.POST("/folders", s.CreateFolder())
-	e.GET("/folders/:userId/:folderName", s.GetFolder())
-	e.GET("/folders/:userId", s.GetFolders())
-	e.PUT("/folders/:userId/:folderName", s.UpdateFolderName())
-	e.DELETE("/folders/:userId/:folderName", s.DeleteFolder())
+	e.GET("/folders/:userName/:folderName", s.GetFolder())
+	e.GET("/folders/:userName", s.GetFolders())
+	e.PUT("/folders/:userName/:folderName", s.UpdateFolderName())
+	e.DELETE("/folders/:userName/:folderName", s.DeleteFolder())
 
 	// Start server
 	e.Logger.Fatal(e.Start(":" + s.Port))
