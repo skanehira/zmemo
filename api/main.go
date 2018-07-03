@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
+	"zmemo/api/config"
+	"zmemo/api/model"
+	"zmemo/api/server"
 
-	"github.com/jinzhu/configor"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
@@ -16,32 +19,33 @@ import (
 func main() {
 
 	// get config
-	config := new(Config)
-	if err := configor.Load(config, "./config.yaml"); err != nil {
-		panic(err)
-	}
+	config := config.NewConfig()
 
 	// connect db
-	// user:password@tcp(localhost:3306)/dbname
-	db, err := gorm.Open("mysql", config.DB.User+":"+config.DB.Password+"@tcp("+config.DB.Host+":"+config.DB.Port+")/"+config.DB.Name+"?"+"charset=utf8mb4,utf8")
+	// user:password@tcp(localhost:3306)/dbname?parseTime=true&charaset=utf8mb4,utf8
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4,utf8", config.DB.User, config.DB.Password, config.DB.Host, config.DB.Port, config.DB.Name)
+	db, err := gorm.Open("mysql", dsn)
 
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
-	db.LogMode(true)
+	db.LogMode(config.DBLog)
 
 	// db migrate
 	flag.Parse()
 	if len(flag.Args()) > 0 {
 		if "migrate" == flag.Args()[0] {
 			fmt.Println("db migreate…")
-			if err := db.AutoMigrate(User{}).Error; err != nil {
+			if err := db.AutoMigrate(user.User{}).Error; err != nil {
 				panic(err)
 			}
-
-			db.AutoMigrate(Memo{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
-			db.AutoMigrate(Folder{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
+			db.AutoMigrate(model.Memo{})
+			db.AutoMigrate(model.Folder{})
+			db.AutoMigrate(model.Users{})
+			// db.AutoMigrate(model.Memo{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
+			// db.AutoMigrate(model.Folder{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
+			// db.AutoMigrate(model.Users{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 		}
 		os.Exit(0)
 	}
@@ -65,7 +69,7 @@ func main() {
 	// log.Printf("this is a default level log.")
 
 	// サーバ開始
-	server := Server{config.Port, db}
+	server := server.Server{config.Port, db}
 	server.Start()
 
 }

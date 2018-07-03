@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"reflect"
@@ -24,6 +24,6 @@ func StructToMap(data interface{}) map[string]interface{} {
 }
 
 // 現在の日付を取得
-func GetTime() string {
-	return time.Now().Format("2006-01-02 15:04:05")
+func GetTime() time.Time {
+	return time.Now()
 }

@@ -1,8 +1,9 @@
 appname: zmemo
 port: 8080
+dblog: true
 db:
     name:     zmemo
     user:     zmemo
     password: zmemo
     port:     3306
-    host:     0.0.0.0
+    host:     127.0.0.1

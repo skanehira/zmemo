@@ -4,7 +4,7 @@ services:
     image: busybox
     volumes:
       - ./mysql.storage:/var/lib/mysql
-      # - ./mysql.conf.d:/etc/mysql/conf.d
+      - ./mysql.conf.d:/etc/mysql/conf.d
     container_name: mysql-storage
   db:
     image: mysql:5.7
