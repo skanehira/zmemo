@@ -13,6 +13,7 @@ type userHandler struct {
 	DB *gorm.DB
 }
 
+// NewUserHandler new handler
 func NewUserHandler(db *gorm.DB) *userHandler {
 	return &userHandler{db}
 }
@@ -24,14 +25,15 @@ func (s *userHandler) CreateUser() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			// return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err.Error()))
 		}
 
 		// データバリデーション
 
 		// ユーザ作成
-		db := model.UserDB{s.DB}
-		newUser, err := db.Create(user)
+		model := model.UserDB{DB: s.DB}
+		newUser, err := model.CreateUser(user)
 
 		if err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -51,11 +53,11 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 		if err := c.Bind(&user); err != nil {
 			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
 		}
-		user.UserName = c.Param("userName")
+		user.ID = c.Param("userID")
 
 		// ユーザ情報更新
-		db := model.UserDB{s.DB}
-		newUser, err := db.Update(user)
+		model := model.UserDB{DB: s.DB}
+		newUser, err := model.UpdateUser(user)
 
 		if err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -68,11 +70,12 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 // ユーザ削除
 func (s *userHandler) DeleteUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
+		userID := c.Param("userID")
 
 		// ユーザ削除
-		db := model.UserDB{s.DB}
-		if err := db.Delete(userName); err != nil {
+		model := model.UserDB{DB: s.DB}
+
+		if err := model.DeleteUser(userID); err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}
 
@@ -87,13 +90,13 @@ func (s *userHandler) UpdatePassword() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err.Error()))
 		}
-		user.UserName = c.Param("userName")
+		user.ID = c.Param("userID")
 
 		// ユーザパスワード変更
-		db := model.UserDB{s.DB}
-		if err := db.UpdatePassword(user); err != nil {
+		model := model.UserDB{DB: s.DB}
+		if err := model.UpdatePassword(user); err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}
 
@@ -104,11 +107,11 @@ func (s *userHandler) UpdatePassword() echo.HandlerFunc {
 // ユーザ情報取得
 func (s *userHandler) GetUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
+		userID := c.Param("userID")
 
 		// ユーザ情報取得
-		db := model.UserDB{s.DB}
-		user, err := db.GetUser(userName)
+		model := model.UserDB{DB: s.DB}
+		user, err := model.GetUser(userID)
 
 		if err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -119,12 +122,12 @@ func (s *userHandler) GetUser() echo.HandlerFunc {
 }
 
 // ユーザ一覧取得
-func (s *userHandler) GetUsers() echo.HandlerFunc {
+func (s *userHandler) UserList() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// TODO ロール処理を入れる
 
-		db := model.UserDB{s.DB}
-		users, err := db.GetUsers()
+		model := model.UserDB{DB: s.DB}
+		users, err := model.UserList()
 
 		if err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -145,12 +148,12 @@ func (s *userHandler) Login() echo.HandlerFunc {
 		}
 
 		// ユーザ情報取得
-		db := model.UserDB{s.DB}
+		model := model.UserDB{DB: s.DB}
 
-		if err := db.GetLoginUser(user); err != nil {
+		if err := model.UserLogin(user); err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}
 
-		return c.JSON(http.StatusOK, user)
+		return c.NoContent(http.StatusOK)
 	}
 }

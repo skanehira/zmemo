@@ -18,12 +18,17 @@ type Config struct {
 	}
 }
 
-// NewConfig config.yamlの設定読み込み
-func NewConfig() *Config {
+// New config.yamlの設定読み込み
+func New(file ...string) *Config {
 	config := new(Config)
 
-	if err := configor.Load(config, "./config/config.yaml"); err != nil {
+	if len(file) < 1 {
+		file = append(file, "./config/config.yaml")
+	}
+
+	if err := configor.Load(config, file[0]); err != nil {
 		panic(err)
 	}
+
 	return config
 }

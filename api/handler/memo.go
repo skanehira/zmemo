@@ -29,10 +29,10 @@ func (s *memoHandler) CreateMemo() echo.HandlerFunc {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}
 
-		db := model.MemoDB{s.DB}
+		model := model.MemoDB{DB: s.DB}
 
 		// メモ作成
-		newMemo, err := db.CreateMemo(memo)
+		newMemo, err := model.CreateMemo(memo)
 
 		if err != nil {
 			log.Println("error: " + err.Error())
@@ -46,13 +46,13 @@ func (s *memoHandler) CreateMemo() echo.HandlerFunc {
 // メモ取得
 func (s *memoHandler) GetMemo() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
-		memoId := c.Param("memoId")
+		userID := c.Param("userID")
+		memoID := c.Param("memoID")
 
-		db := model.MemoDB{s.DB}
+		model := model.MemoDB{DB: s.DB}
 
 		// メモ取得
-		memo, err := db.GetMemo(userName, memoId)
+		memo, err := model.GetMemo(userID, memoID)
 
 		if err != nil {
 			log.Println("error: " + err.Error())
@@ -64,12 +64,12 @@ func (s *memoHandler) GetMemo() echo.HandlerFunc {
 }
 
 // メモ一覧取得
-func (s *memoHandler) GetMemos() echo.HandlerFunc {
+func (s *memoHandler) MemoList() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
+		userID := c.Param("userID")
 
-		db := model.MemoDB{s.DB}
-		memos, err := db.GetMemos(userName)
+		model := model.MemoDB{DB: s.DB}
+		memos, err := model.MemoList(userID)
 
 		if err != nil {
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -79,15 +79,62 @@ func (s *memoHandler) GetMemos() echo.HandlerFunc {
 	}
 }
 
+// メモ更新
+func (s *memoHandler) UpdateMemo() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		newMemo := model.Memo{}
+
+		if err := c.Bind(&newMemo); err != nil {
+			log.Println("error: " + err.Error())
+			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+		}
+
+		newMemo.ID = c.Param("memoID")
+		newMemo.UserID = c.Param("userID")
+
+		model := model.MemoDB{DB: s.DB}
+		newMemo, err := model.UpdateMemo(newMemo)
+
+		if err != nil {
+			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+		}
+
+		return c.JSON(http.StatusOK, newMemo)
+	}
+}
+
 // メモ削除
 func (s *memoHandler) DeleteMemo() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
-		memoId := c.Param("memoId")
+		userID := c.Param("userID")
+		memoID := c.Param("memoID")
 
-		// パラメータバリデーション
-		db := model.MemoDB{s.DB}
-		if err := db.DeleteMemo(userName, memoId); err != nil {
+		model := model.MemoDB{DB: s.DB}
+		if err := model.DeleteMemo(userID, memoID); err != nil {
+			log.Println("error: " + err.Error())
+			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+		}
+
+		return c.NoContent(http.StatusOK)
+	}
+}
+
+// フォルダ追加
+func (s *memoHandler) AddMemoToFolder() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		memo := model.Memo{}
+
+		if err := c.Bind(&memo); err != nil {
+			log.Println("error: " + err.Error())
+			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+		}
+
+		memo.ID = c.Param("memoID")
+		memo.UserID = c.Param("userID")
+
+		model := model.MemoDB{DB: s.DB}
+
+		if err := model.AddMemoToFolder(memo); err != nil {
 			log.Println("error: " + err.Error())
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}

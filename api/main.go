@@ -5,21 +5,22 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/user"
 	"zmemo/api/config"
+	"zmemo/api/logger"
 	"zmemo/api/model"
 	"zmemo/api/server"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-
-	"github.com/comail/colog"
+	"github.com/labstack/echo"
 )
 
 func main() {
-
 	// get config
-	config := config.NewConfig()
+	config := config.New()
+
+	// init logger
+	logger.Init()
 
 	// connect db
 	// user:password@tcp(localhost:3306)/dbname?parseTime=true&charaset=utf8mb4,utf8
@@ -35,41 +36,57 @@ func main() {
 	// db migrate
 	flag.Parse()
 	if len(flag.Args()) > 0 {
-		if "migrate" == flag.Args()[0] {
-			fmt.Println("db migreate…")
-			if err := db.AutoMigrate(user.User{}).Error; err != nil {
-				panic(err)
+		errors := []error{}
+
+		if "create" == flag.Args()[0] {
+			log.Print("info: start create tables...")
+
+			if err := db.AutoMigrate(model.Memo{}).Error; err != nil {
+				errors = append(errors, err)
 			}
-			db.AutoMigrate(model.Memo{})
-			db.AutoMigrate(model.Folder{})
-			db.AutoMigrate(model.Users{})
+			if err := db.AutoMigrate(model.Folder{}).Error; err != nil {
+				errors = append(errors, err)
+			}
+			if err := db.AutoMigrate(model.User{}).Error; err != nil {
+				errors = append(errors, err)
+			}
+
+			// エラーがない場合
+			if len(errors) < 1 {
+				log.Printf("info: end create tables...")
+			}
+
 			// db.AutoMigrate(model.Memo{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 			// db.AutoMigrate(model.Folder{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 			// db.AutoMigrate(model.Users{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
+		} else if "drop" == flag.Args()[0] {
+			log.Print("info: start drop tables...")
+
+			if err := db.DropTableIfExists(model.Memo{}).Error; err != nil {
+				errors = append(errors, err)
+			}
+			if err := db.DropTableIfExists(model.Folder{}).Error; err != nil {
+				errors = append(errors, err)
+			}
+			if err := db.DropTableIfExists(model.User{}).Error; err != nil {
+				errors = append(errors, err)
+			}
+
+			// エラーがない場合
+			if len(errors) < 1 {
+				log.Printf("info: end drop tables...")
+			}
 		}
+
+		for _, err := range errors {
+			log.Printf("error: %s", err)
+		}
+
 		os.Exit(0)
 	}
 
-	// ログ設定
-	// colog.SetDefaultLevel(colog.LDebug)
-	colog.SetMinLevel(colog.LTrace)
-	colog.SetFormatter(&colog.StdFormatter{
-		Colors: true,
-		Flag:   log.Ldate | log.Ltime | log.Lshortfile,
-	})
-	colog.Register()
-
-	// ログの設定方法
-	// log.Printf("trace: this is a trace log.")
-	// log.Printf("debug: this is a debug log.")
-	// log.Printf("info: this is an info log.")
-	// log.Printf("warn: this is a warning log.")
-	// log.Printf("error: this is an error log.")
-	// log.Printf("alert: this is an alert log.")
-	// log.Printf("this is a default level log.")
-
 	// サーバ開始
-	server := server.Server{config.Port, db}
+	server := server.Server{Port: config.Port, DB: db, Echo: echo.New()}
 	server.Start()
 
 }

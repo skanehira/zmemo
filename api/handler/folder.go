@@ -28,8 +28,8 @@ func (s *folderHandler) CreateFolder() echo.HandlerFunc {
 		}
 
 		// フォルダ作成
-		db := model.FolderDB{s.DB}
-		folder, err := db.CreateFolder(folder)
+		model := model.FolderDB{DB: s.DB}
+		folder, err := model.CreateFolder(folder)
 		if err != nil {
 			log.Println("error: " + err.Error())
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
@@ -42,11 +42,11 @@ func (s *folderHandler) CreateFolder() echo.HandlerFunc {
 
 func (s *folderHandler) GetFolder() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		userID := c.Param("userID")
+		folderID := c.Param("folderID")
 
-		folderName := c.Param("folderName")
-
-		db := model.FolderDB{s.DB}
-		folder, err := db.GetFolder(folderName)
+		model := model.FolderDB{DB: s.DB}
+		folder, err := model.GetFolder(userID, folderID)
 
 		if err != nil {
 			log.Println("error: " + err.Error())
@@ -58,12 +58,12 @@ func (s *folderHandler) GetFolder() echo.HandlerFunc {
 	}
 }
 
-func (s *folderHandler) GetFolders() echo.HandlerFunc {
+func (s *folderHandler) FolderList() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
+		userID := c.Param("userID")
 
-		db := model.FolderDB{s.DB}
-		folders, err := db.GetFolders(userName)
+		model := model.FolderDB{DB: s.DB}
+		folders, err := model.FolderList(userID)
 
 		if err != nil {
 			log.Println("error: " + err.Error())
@@ -74,14 +74,21 @@ func (s *folderHandler) GetFolders() echo.HandlerFunc {
 	}
 }
 
-func (s *folderHandler) UpdateFolderName() echo.HandlerFunc {
+func (s *folderHandler) UpdateFolder() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userName := c.Param("userName")
-		folderName := c.Param("folderName")
+		folder := model.Folder{}
 
-		db := model.FolderDB{s.DB}
+		if err := c.Bind(&folder); err != nil {
+			log.Println("error: " + err.Error())
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+		}
 
-		if err := db.UpdateFolderName(userName, folderName); err != nil {
+		folder.ID = c.Param("folderID")
+		folder.UserID = c.Param("userID")
+
+		model := model.FolderDB{DB: s.DB}
+
+		if err := model.UpdateFolder(folder); err != nil {
 			log.Println("error: " + err.Error())
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}
@@ -92,10 +99,11 @@ func (s *folderHandler) UpdateFolderName() echo.HandlerFunc {
 
 func (s *folderHandler) DeleteFolder() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		folderName := c.Param("folderName")
+		folderID := c.Param("folderID")
+		userID := c.Param("userID")
 
-		db := model.FolderDB{s.DB}
-		if err := db.DeleteFolder(folderName); err != nil {
+		model := model.FolderDB{DB: s.DB}
+		if err := model.DeleteFolder(userID, folderID); err != nil {
 			log.Println("error: " + err.Error())
 			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
 		}

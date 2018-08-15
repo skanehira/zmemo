@@ -7,13 +7,12 @@ import (
 	"zmemo/api/common"
 
 	"github.com/jinzhu/gorm"
-	uuid "github.com/satori/go.uuid"
 )
 
 type Memo struct {
 	ID        string     `gorm:"primary_key" json:"id"`
 	UserID    string     `gorm:"primary_key" json:"userID"`
-	FolderID  string     `gorm:"unique" json:"folderID"`
+	FolderID  *string    `gorm:"unique;null" json:"folderID,omitempty"`
 	Title     string     `gorm:"not null" json:"title"`
 	Text      string     `gorm:"not null" json:"text"`
 	CreatedAt time.Time  `gorm:"null" json:"createAt"`
@@ -27,69 +26,32 @@ type MemoDB struct {
 	DB *gorm.DB
 }
 
-func (m *MemoDB) CreateMemo(memo Memo) (Memo, error) {
-	// メモID生成
-	uuid, err := uuid.NewV4()
+// CreateMemo create new memo
+func (d *MemoDB) CreateMemo(newMemo Memo) (Memo, error) {
+	// 初期値
+	newMemo.ID = common.NewUUID()
+	newMemo.CreatedAt = common.GetTime()
+	newMemo.UpdatedAt = common.GetTime()
+
+	if err := d.DB.Create(&newMemo).Error; err != nil {
+		log.Println("error: " + err.Error())
+		return newMemo, err
+	}
+
+	newMemo, err := d.GetMemo(newMemo.UserID, newMemo.ID)
 	if err != nil {
 		log.Println("error: " + err.Error())
-		return memo, common.ErrInvalidMemoID
+		return newMemo, err
 	}
 
-	// 初期値
-	memo.ID = uuid.String()
-	memo.CreatedAt = common.GetTime()
-	memo.UpdatedAt = common.GetTime()
-
-	if err := m.DB.Create(&memo).Find(&memo).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			err = common.ErrNotFuondMemo
-			log.Println("error: " + err.Error())
-		}
-		log.Println("error: " + err.Error())
-		return memo, err
-	}
-
-	return memo, nil
+	return newMemo, nil
 }
 
-func (m *MemoDB) DeleteMemo(userName, memoId string) error {
-	memo := Memo{ID: memoId}
+// GetMemo get memo
+func (d *MemoDB) GetMemo(userID, memoID string) (Memo, error) {
+	memo := Memo{ID: memoID, UserID: userID}
 
-	db := m.DB.Find(&memo)
-
-	if err := db.Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return common.ErrNotFuondMemo
-		}
-		log.Println("error: " + err.Error())
-
-		return err
-	}
-
-	if err := db.Delete(&memo).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (m *MemoDB) GetMemos(userName string) (Memos, error) {
-
-	memos := Memos{}
-
-	if err := m.DB.Model(Memo{}).Where("user_name = ?", userName).Scan(&memos).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return memos, err
-	}
-
-	return memos, nil
-}
-
-func (m *MemoDB) GetMemo(userName, memoId string) (Memo, error) {
-	memo := Memo{ID: memoId}
-
-	if err := m.DB.Find(&memo).Error; err != nil {
+	if err := d.DB.Find(&memo).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			log.Println("error: " + err.Error())
 			return memo, common.ErrNotFuondMemo
@@ -101,38 +63,95 @@ func (m *MemoDB) GetMemo(userName, memoId string) (Memo, error) {
 	return memo, nil
 }
 
-func (m *MemoDB) AddMemoToFolder(userName, memoId, folderName string) error {
+// MemoList get memo list
+func (d *MemoDB) MemoList(userID string) (Memos, error) {
 
-	memo := Memo{ID: memoId}
+	memos := Memos{}
 
-	// ユーザ・フォルダ・メモがある場合、メモ情報を取得
-	if err := m.DB.Model(&memo).Select("memos.*").Joins("inner join users on users.user_name = memos.user_name").
-		Joins("inner join folders on users.user_name = folders.user_name").First(&memo).Error; err != nil {
+	if err := d.DB.Model(Memo{}).Where("user_id = ?", userID).Scan(&memos).Error; err != nil {
+		log.Println("error: " + err.Error())
+		return memos, err
+	}
+
+	return memos, nil
+}
+
+// UpdateMemo update memo info
+func (d *MemoDB) UpdateMemo(memo Memo) (Memo, error) {
+
+	// メモがない場合はエラーを返す
+	if _, err := d.GetMemo(memo.UserID, memo.ID); err != nil {
+		return memo, err
+	}
+
+	// メモデータ更新
+	newData := map[string]interface{}{"updated_at": common.GetTime()}
+
+	if memo.Text != "" {
+		newData["text"] = memo.Text
+	}
+
+	if memo.Title != "" {
+		newData["title"] = memo.Title
+	}
+
+	if err := d.DB.Model(&memo).Where("id = ? and user_id = ?", memo.ID, memo.UserID).Updates(newData).Error; err != nil {
+		return memo, err
+	}
+
+	// 更新後データを取得
+	memo, err := d.GetMemo(memo.UserID, memo.ID)
+	if err != nil {
+		return memo, err
+	}
+
+	return memo, nil
+}
+
+// DeleteMemo delete memo
+func (d *MemoDB) DeleteMemo(userID, memoID string) error {
+
+	if _, err := d.GetMemo(userID, memoID); err != nil {
 		return err
 	}
 
-	// フォルダ名がプライマリキーなので、where句に自動的に追加される
-	db := m.DB.Table("folders").Where("user_name = ? and memo_id = ?", userName, memoId).UpdateColumn("folder_name", folderName)
+	memo := Memo{ID: memoID, UserID: userID}
 
-	if err := db.Error; err != nil {
+	if err := d.DB.Delete(&memo).Error; err != nil {
+		log.Println("error: " + err.Error())
 		return err
 	}
-
-	// if err := db.Scan(&memo).Error; err != nil {
-	// 	return err
-	// }
 
 	return nil
 }
 
-func (m *Memo) Validation() error {
+// DeleteAllMemo delete all memo
+func (d *MemoDB) DeleteAllMemo(userID string) error {
+	memo := Memo{UserID: userID}
 
-	if m.Title == "" {
-		return common.ErrNotFoundTitle
+	if err := d.DB.Delete(&memo).Error; err != nil {
+		log.Println("error: " + err.Error())
+		return err
+
 	}
 
-	if m.Text == "" {
-		return common.ErrInvalidMemo
+	return nil
+}
+
+// AddMemoToFolder add memo to target folder
+func (d *MemoDB) AddMemoToFolder(m Memo) error {
+	// フォルダ存在確認
+	f := Folder{ID: *m.FolderID}
+	if err := d.DB.Find(&f).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return common.ErrNotFoundFolder
+		}
+		return err
+	}
+
+	// update memo
+	if err := d.DB.Model(&m).UpdateColumns(common.StructToMap(&m)).Error; err != nil {
+		return err
 	}
 
 	return nil

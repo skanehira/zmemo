@@ -8,8 +8,9 @@ import (
 )
 
 type Folder struct {
-	ID         string     `gorm:"primary_key;not null" json:"id"`
-	FolderName string     `gorm:"not null" json:"FolderName"`
+	ID         string     `gorm:"primary_key" json:"id"`
+	UserID     string     `gorm:"primary_key" json:"userId"`
+	FolderName string     `gorm:"primary_key" json:"FolderName"`
 	CreatedAt  time.Time  `gorm:"null" json:"createAt"`
 	UpdatedAt  time.Time  `gorm:"null" json:"updateAt"`
 	DeletedAt  *time.Time `gorm:"null" json:"deletedAt"`
@@ -19,70 +20,84 @@ type FolderDB struct {
 	DB *gorm.DB
 }
 
+// Folders type folder list
 type Folders []Folder
 
-func (d *FolderDB) CreateFolder(folder Folder) (Folder, error) {
+// CreateFolder create new folder
+func (d *FolderDB) CreateFolder(f Folder) (Folder, error) {
 	// 初期値
-	folder.CreatedAt = common.GetTime()
-	folder.UpdatedAt = common.GetTime()
+	f.ID = common.NewUUID()
+	f.CreatedAt = common.GetTime()
+	f.UpdatedAt = common.GetTime()
 
-	if err := d.DB.Create(&folder).Find(&folder).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return folder, common.ErrNotFoundFolder
-		}
-		return folder, err
+	if err := d.DB.Create(&f).Error; err != nil {
+		return f, err
 	}
 
-	return folder, nil
+	if newFolder, err := d.GetFolder(f.UserID, f.ID); err != nil {
+		return newFolder, err
+	}
+
+	return f, nil
 }
 
-func (d *FolderDB) GetFolder(folderName string) (Folder, error) {
+// GetFolder get folder
+func (d *FolderDB) GetFolder(userID, folderID string) (Folder, error) {
 
-	folder := Folder{
-		FolderName: folderName,
+	f := Folder{
+		ID:     folderID,
+		UserID: userID,
 	}
-	if err := d.DB.Find(&folder).Error; err != nil {
+
+	if err := d.DB.Find(&f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return folder, common.ErrNotFoundFolder
+			return f, common.ErrNotFoundFolder
 		}
-		return folder, err
+		return f, err
 	}
 
-	return folder, nil
+	return f, nil
 }
 
-func (d *FolderDB) GetFolders(userName string) (Folders, error) {
+// FolderList get folder list
+func (d *FolderDB) FolderList(userID string) (Folders, error) {
 	folders := Folders{}
 
-	if err := d.DB.Model(&Folder{}).Where("user_name = ?", userName).Scan(&folders).Error; err != nil {
+	if err := d.DB.Model(&Folder{}).Where("user_id = ?", userID).Scan(&folders).Error; err != nil {
 		return folders, err
 	}
 
 	return folders, nil
 }
 
-func (d *FolderDB) UpdateFolderName(userName, folderName string) error {
-	newFolder := Folder{
-		FolderName: folderName,
-		UpdatedAt:  common.GetTime(),
+// UpdateFolder update folder info
+func (d *FolderDB) UpdateFolder(f Folder) error {
+
+	// フォルダがない場合はエラーを返す
+	if _, err := d.GetFolder(f.UserID, f.ID); err != nil {
+		return err
 	}
 
-	if err := d.DB.Model(&newFolder).UpdateColumns(common.StructToMap(&newFolder)).Error; err != nil {
+	// 更新データ
+	newData := map[string]interface{}{"folder_name": f.FolderName, "updated_at": common.GetTime()}
+
+	// フォルダを更新
+	if err := d.DB.Model(&f).Updates(newData).Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (d *FolderDB) DeleteFolder(folderName string) error {
-	folder := Folder{FolderName: folderName}
+// DeleteFolder delete folder
+func (d *FolderDB) DeleteFolder(userID, folderID string) error {
+	folder := Folder{
+		ID:     folderID,
+		UserID: userID,
+	}
 
-	db := d.DB.Find(&folder)
-
-	if err := db.Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return common.ErrNotFoundFolder
-		}
+	if _, err := d.GetFolder(userID, folderID); err != nil {
+		return err
 	}
 
 	if err := d.DB.Delete(&folder).Error; err != nil {
@@ -92,10 +107,12 @@ func (d *FolderDB) DeleteFolder(folderName string) error {
 	return nil
 }
 
-func (f *Folder) FolderValidation(folderName string) error {
+// DeleteAllFolder delete all folder
+func (d *FolderDB) DeleteAllFolder(userID string) error {
+	folder := Folder{UserID: userID}
 
-	if folderName == "" {
-		return common.ErrInvalidFolderName
+	if err := d.DB.Delete(&folder).Error; err != nil {
+		return err
 	}
 
 	return nil
