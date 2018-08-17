@@ -12,7 +12,7 @@ import (
 // User user info
 type User struct {
 	ID        string     `gorm:"primary_key;not null" json:"id"`
-	UserName  string     `gorm:"not null" json:"userName"`
+	Name      string     `gorm:"not null" json:"name"`
 	Password  string     `gorm:"not null" json:"password"`
 	Memos     []Memo     `gorm:"null" json:"memos"`
 	Folders   []Folder   `gorm:"null" json:"folders"`
@@ -78,17 +78,12 @@ func (d *UserDB) GetUser(id string) (User, error) {
 // UpdateUser ユーザ更新
 func (d *UserDB) UpdateUser(user User) (User, error) {
 	// ユーザが存在しない場合はエラーを返す
-	oldUser, err := d.GetUser(user.ID)
+	_, err := d.GetUser(user.ID)
 	if err != nil {
 		return user, err
 	}
 
-	// 更新日取得
-	newTime := common.GetTime()
-	user.UpdatedAt = newTime
-	user.CreatedAt = oldUser.CreatedAt
-
-	if err := d.DB.Model(&user).Updates(user).Error; err != nil {
+	if err := d.DB.Model(&user).Updates(map[string]interface{}{"name": user.Name, "updated_at": common.GetTime()}).Error; err != nil {
 		return user, err
 	}
 

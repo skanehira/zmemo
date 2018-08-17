@@ -55,22 +55,22 @@ func InitServer() *echo.Echo {
 }
 
 // POST http post
-func POST(e *echo.Echo, path string, body []byte) (int, string) {
+func POST(e *echo.Echo, path string, body []byte) (int, []byte) {
 	req := httptest.NewRequest("POST", path, bytes.NewBuffer(body))
 	req.Header.Set("Content-type", "application/json")
 	rec := httptest.NewRecorder()
 
 	e.ServeHTTP(rec, req)
 
-	return rec.Code, rec.Body.String()
+	return rec.Code, rec.Body.Bytes()
 }
 
 // GET http get
-func GET(e *echo.Echo, path string, params ...string) (int, string) {
+func GET(e *echo.Echo, path string, params ...string) (int, []byte) {
 	req := httptest.NewRequest("GET", path, nil)
 	rec := httptest.NewRecorder()
 
 	e.ServeHTTP(rec, req)
 
-	return rec.Code, rec.Body.String()
+	return rec.Code, rec.Body.Bytes()
 }
