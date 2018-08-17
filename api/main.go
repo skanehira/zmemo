@@ -86,7 +86,7 @@ func main() {
 	}
 
 	// サーバ開始
-	server := server.Server{Port: config.Port, DB: db, Echo: echo.New()}
-	server.Start()
+	s := server.New(config.Port, db, echo.New())
+	s.Start()
 
 }
