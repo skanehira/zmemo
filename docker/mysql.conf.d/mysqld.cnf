@@ -1,3 +1,4 @@
 [mysqld]
 max_allowed_packet = 32M
-default-time-zone = 'Asia/Tokyo'
+#default-time-zone = 'Asia/Tokyo'
+explicit_defaults_for_timestamp=true
