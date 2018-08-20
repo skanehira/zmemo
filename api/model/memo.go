@@ -1,7 +1,6 @@
 package model
 
 import (
-	"log"
 	"time"
 
 	"zmemo/api/common"
@@ -26,6 +25,11 @@ type MemoDB struct {
 	DB *gorm.DB
 }
 
+// Validation memo dta validate
+func (m *Memo) Validation() {
+
+}
+
 // CreateMemo create new memo
 func (d *MemoDB) CreateMemo(newMemo Memo) (Memo, error) {
 	// 初期値
@@ -34,13 +38,11 @@ func (d *MemoDB) CreateMemo(newMemo Memo) (Memo, error) {
 	newMemo.UpdatedAt = common.GetTime()
 
 	if err := d.DB.Create(&newMemo).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return newMemo, err
+		return newMemo, common.WrapError(err)
 	}
 
 	newMemo, err := d.GetMemo(newMemo.UserID, newMemo.ID)
 	if err != nil {
-		log.Println("error: " + err.Error())
 		return newMemo, err
 	}
 
@@ -53,11 +55,9 @@ func (d *MemoDB) GetMemo(userID, memoID string) (Memo, error) {
 
 	if err := d.DB.Find(&memo).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			log.Println("error: " + err.Error())
-			return memo, common.ErrNotFuondMemo
+			err = common.ErrNotFuondMemo
 		}
-		log.Println("error: " + err.Error())
-		return memo, err
+		return memo, common.WrapError(err)
 	}
 
 	return memo, nil
@@ -69,8 +69,7 @@ func (d *MemoDB) MemoList(userID string) (Memos, error) {
 	memos := Memos{}
 
 	if err := d.DB.Model(Memo{}).Where("user_id = ?", userID).Scan(&memos).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return memos, err
+		return memos, common.WrapError(err)
 	}
 
 	return memos, nil
@@ -96,7 +95,7 @@ func (d *MemoDB) UpdateMemo(memo Memo) (Memo, error) {
 	}
 
 	if err := d.DB.Model(&memo).Where("id = ? and user_id = ?", memo.ID, memo.UserID).Updates(newData).Error; err != nil {
-		return memo, err
+		return memo, common.WrapError(err)
 	}
 
 	// 更新後データを取得
@@ -118,8 +117,7 @@ func (d *MemoDB) DeleteMemo(userID, memoID string) error {
 	memo := Memo{ID: memoID, UserID: userID}
 
 	if err := d.DB.Delete(&memo).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return err
+		return common.WrapError(err)
 	}
 
 	return nil
@@ -130,9 +128,7 @@ func (d *MemoDB) DeleteAllMemo(userID string) error {
 	memo := Memo{UserID: userID}
 
 	if err := d.DB.Delete(&memo).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return err
-
+		return common.WrapError(err)
 	}
 
 	return nil
@@ -144,14 +140,14 @@ func (d *MemoDB) AddMemoToFolder(m Memo) error {
 	f := Folder{ID: *m.FolderID}
 	if err := d.DB.Find(&f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return common.ErrNotFoundFolder
+			err = common.ErrNotFoundFolder
 		}
-		return err
+		return common.WrapError(err)
 	}
 
 	// update memo
 	if err := d.DB.Model(&m).UpdateColumns(common.StructToMap(&m)).Error; err != nil {
-		return err
+		return common.WrapError(err)
 	}
 
 	return nil

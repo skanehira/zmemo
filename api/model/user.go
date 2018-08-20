@@ -1,10 +1,10 @@
 package model
 
 import (
-	"log"
 	"time"
 
 	"zmemo/api/common"
+	"zmemo/api/logger"
 
 	"github.com/jinzhu/gorm"
 )
@@ -28,8 +28,24 @@ type UserDB struct {
 	DB *gorm.DB
 }
 
+// Validation user data validate
+func (u *User) Validation() error {
+	if u.Password != "" || common.ValidPassword.MatchString(u.Password) {
+		return common.ErrInvalidPassword
+
+	}
+
+	if u.Name != "" || common.IsAlphanumeric.MatchString(u.Name) {
+		return common.ErrInvalidUserName
+	}
+
+	return nil
+}
+
 // CreateUser ユーザ作成
 func (d *UserDB) CreateUser(newUser User) (User, error) {
+	logger.Info("CreateUser() is start")
+
 	// 初期値
 	newUser.ID = common.NewUUID()
 	newUser.CreatedAt = common.GetTime()
@@ -39,21 +55,22 @@ func (d *UserDB) CreateUser(newUser User) (User, error) {
 
 	// ユーザ登録
 	if err := d.DB.Create(&newUser).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return newUser, err
+		return newUser, common.WrapError(err)
 	}
 
 	newUser, err := d.GetUser(newUser.ID)
 	if err != nil {
-		log.Println("error: " + err.Error())
-		return newUser, err
+		return newUser, common.WrapError(err)
 	}
+
+	logger.Info("CreateUser() is end")
 
 	return newUser, nil
 }
 
 // GetUser ユーザ情報取得
 func (d *UserDB) GetUser(id string) (User, error) {
+	logger.Info("GetUSer() is start")
 	user := User{ID: id}
 	memos := Memos{}
 	folders := Folders{}
@@ -61,22 +78,23 @@ func (d *UserDB) GetUser(id string) (User, error) {
 	// ユーザが存在しない
 	if err := d.DB.Find(&user).Related(&memos).Related(&folders).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			log.Println("error: " + common.ErrNotFoundUser.Error())
-			return user, common.ErrNotFoundUser
+			err = common.ErrNotFoundUser
 		}
 
-		log.Println("error: " + err.Error())
-		return user, err
+		return user, common.WrapError(err)
 	}
 
 	user.Memos = memos
 	user.Folders = folders
 
+	logger.Info("GetUSer() is end")
 	return user, nil
 }
 
 // UpdateUser ユーザ更新
 func (d *UserDB) UpdateUser(user User) (User, error) {
+	logger.Info("UpdateUser() is start")
+
 	// ユーザが存在しない場合はエラーを返す
 	_, err := d.GetUser(user.ID)
 	if err != nil {
@@ -84,7 +102,7 @@ func (d *UserDB) UpdateUser(user User) (User, error) {
 	}
 
 	if err := d.DB.Model(&user).Updates(map[string]interface{}{"name": user.Name, "updated_at": common.GetTime()}).Error; err != nil {
-		return user, err
+		return user, common.WrapError(err)
 	}
 
 	// 更新後のデータを返却する
@@ -93,11 +111,13 @@ func (d *UserDB) UpdateUser(user User) (User, error) {
 		return user, err
 	}
 
+	logger.Info("UpdateUser() is end")
 	return newUser, nil
 }
 
 // DeleteUser ユーザ削除
 func (d *UserDB) DeleteUser(id string) error {
+	logger.Info("DeleteUser() is start")
 
 	// ユーザが存在しない
 	user, err := d.GetUser(id)
@@ -113,39 +133,36 @@ func (d *UserDB) DeleteUser(id string) error {
 
 	// delete memo
 	if err := m.DeleteAllMemo(id); err != nil {
-		log.Println("error: " + err.Error())
 		if err := db.Rollback().Error; err != nil {
-			return err
+			return common.WrapError(err)
 		}
-
-		return err
+		return common.WrapError(err)
 	}
 
 	// delete folder
 	if err := f.DeleteAllFolder(id); err != nil {
-		log.Println("error: " + err.Error())
 		if err := db.Rollback().Error; err != nil {
-			return err
+			return common.WrapError(err)
 		}
 
-		return err
+		return common.WrapError(err)
 	}
 
 	// delete user
 	if err := db.Delete(&user).Error; err != nil {
-		log.Println("error: " + err.Error())
 		if err := db.Rollback().Error; err != nil {
-			return err
+			return common.WrapError(err)
 		}
 
-		return err
+		return common.WrapError(err)
 	}
 
 	// db commit
 	if err := db.Commit().Error; err != nil {
-		return err
+		return common.WrapError(err)
 	}
 
+	logger.Info("DeleteUser() is end")
 	return nil
 }
 
@@ -160,7 +177,7 @@ func (d *UserDB) UpdatePassword(user User) error {
 	newData := map[string]interface{}{"updated_at": common.GetTime(), "password": user.Password}
 
 	if err := d.DB.Model(&user).Where("id = ?", user.ID).Updates(newData).Error; err != nil {
-		return err
+		return common.WrapError(err)
 	}
 
 	return nil
@@ -171,8 +188,7 @@ func (d *UserDB) UserList() (Users, error) {
 	users := Users{}
 
 	if err := d.DB.Preload("Folders").Preload("Memos").Find(&users).Error; err != nil {
-		log.Println("error: " + err.Error())
-		return users, err
+		return users, common.WrapError(err)
 	}
 
 	return users, nil
@@ -186,56 +202,8 @@ func (d *UserDB) UserLogin(user User) error {
 		if gorm.IsRecordNotFoundError(err) {
 			err = common.ErrNotFoundUser
 		}
-		log.Println("error: " + err.Error())
-		return err
+		return common.WrapError(err)
 	}
 
 	return nil
 }
-
-//var IsAlphanumeric = regexp.MustCompile(`^[a-zA-Z0-9]*$`) // 英文字3~15
-//var IsNumberic = regexp.MustCompile(`^[0-9]*$`)
-//var IsDate = regexp.MustCompile(`^\d{4}-\d{1,2}-\d{1,2} \d{2}:\d{2}:\d{2}$`) // yyyy-mm-dd hh:mm:ss
-//var ValidPassword = regexp.MustCompile(`^[a-zA-Z0-9]*$`)                     // パスワード
-//var IsUUID = regexp.MustCompile(`^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$`)
-//
-//// 入力ありの場合はチェックする
-//func IsValidPassword(password string) bool {
-//	return password != "" && ValidPassword.MatchString(password)
-//}
-//
-//func IsValidUserName(userName string) bool {
-//	return userName != "" && IsAlphanumeric.MatchString(userName)
-//}
-//
-//func IsValidUUID(u string) bool {
-//	_, err := uuid.FromString(u)
-//	return err == nil
-//}
-//
-//func (u *User) UserValidation(user User, mode int) error {
-//	if !IsValidUserName(user.UserName) {
-//		return common.ErrInvalidUserName
-//	}
-//
-//	// 作成時チェック
-//	if mode == 0 {
-//		// パスワードチェック
-//		if !IsValidPassword(user.Password) {
-//			return common.ErrInvalidPassword
-//		}
-//	}
-//
-//	// 更新時チェック
-//	if mode == 1 {
-//		// 入力があればチェックする
-//		if user.Password != "" {
-//			if !IsValidPassword(user.Password) {
-//				return common.ErrInvalidPassword
-//			}
-//		}
-//	}
-//
-//	return nil
-//}
-//

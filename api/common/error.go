@@ -1,9 +1,10 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -26,14 +27,19 @@ var (
 
 // ErrorMessage エラー構造体
 type ErrorMessage struct {
-	Message string `json:"message"`
+	Message interface{} `json:"message"`
 }
 
 // NewError 新しいエラーを生成
-func NewError(message string) ErrorMessage {
+func NewError(err error) ErrorMessage {
 	return ErrorMessage{
-		Message: message,
+		Message: err.Error(),
 	}
+}
+
+// WrapError error Wrapper
+func WrapError(err error) error {
+	return errors.Wrap(err, "")
 }
 
 // Error エラーメッセージを出力

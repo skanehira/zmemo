@@ -6,13 +6,6 @@ import (
 	"github.com/comail/colog"
 )
 
-const (
-	Linfo  = "info: %"
-	Lwarn  = "warn: %"
-	Lerror = "error: %"
-	Ldebug = "debug: %"
-)
-
 func Init() {
 	// ログの設定方法
 	// log.Printf("trace: this is a trace log.")
@@ -31,13 +24,32 @@ func Init() {
 		Flag:   log.Ldate | log.Ltime | log.Lshortfile,
 	})
 	colog.Register()
-
 }
 
-func LogInfo(message string) {
+func Info(message string) {
 	log.Print("info: " + message)
 }
 
-func LogInfof(format string, args ...interface{}) {
-	log.Printf(format, args)
+func Infof(format string, args ...interface{}) {
+	log.Printf("info: "+format, args)
+}
+
+func Warn(err error) {
+	format := "warn: %+v"
+	log.Printf(format, err)
+}
+
+func Error(err error) {
+	format := "error: %+v"
+	log.Printf(format, err)
+}
+
+func Errorf(format string, i interface{}) {
+	if err, ok := i.(error); ok {
+		format = "error: %+v"
+		log.Printf(format, err)
+	} else {
+		format = "error: " + format
+		log.Printf(format, i)
+	}
 }

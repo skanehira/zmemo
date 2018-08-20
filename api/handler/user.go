@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"zmemo/api/common"
+	"zmemo/api/logger"
 	"zmemo/api/model"
 
 	"github.com/jinzhu/gorm"
@@ -25,18 +26,23 @@ func (s *userHandler) CreateUser() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			// return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err))
 		}
 
 		// データバリデーション
+		// if err := user.Validation(); err != nil {
+		// 	logger.Error(err)
+		// 	return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		// }
 
 		// ユーザ作成
 		model := model.UserDB{DB: s.DB}
 		newUser, err := model.CreateUser(user)
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		// 登録完了
@@ -51,7 +57,8 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData))
 		}
 		user.ID = c.Param("userID")
 
@@ -60,7 +67,8 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 		newUser, err := model.UpdateUser(user)
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, newUser)
@@ -76,7 +84,8 @@ func (s *userHandler) DeleteUser() echo.HandlerFunc {
 		model := model.UserDB{DB: s.DB}
 
 		if err := model.DeleteUser(userID); err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -90,14 +99,16 @@ func (s *userHandler) UpdatePassword() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err))
 		}
 		user.ID = c.Param("userID")
 
 		// ユーザパスワード変更
 		model := model.UserDB{DB: s.DB}
 		if err := model.UpdatePassword(user); err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -114,7 +125,8 @@ func (s *userHandler) GetUser() echo.HandlerFunc {
 		user, err := model.GetUser(userID)
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, user)
@@ -130,7 +142,8 @@ func (s *userHandler) UserList() echo.HandlerFunc {
 		users, err := model.UserList()
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, users)
@@ -144,14 +157,16 @@ func (s *userHandler) Login() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData))
 		}
 
 		// ユーザ情報取得
 		model := model.UserDB{DB: s.DB}
 
 		if err := model.UserLogin(user); err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)

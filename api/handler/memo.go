@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"zmemo/api/common"
+	"zmemo/api/logger"
 	"zmemo/api/model"
 
 	"github.com/jinzhu/gorm"
@@ -15,6 +15,7 @@ type memoHandler struct {
 	DB *gorm.DB
 }
 
+// NewMemoHandler new memo handler
 func NewMemoHandler(db *gorm.DB) *memoHandler {
 	return &memoHandler{db}
 }
@@ -25,8 +26,8 @@ func (s *memoHandler) CreateMemo() echo.HandlerFunc {
 		memo := model.Memo{}
 
 		if err := c.Bind(&memo); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		model := model.MemoDB{DB: s.DB}
@@ -35,8 +36,8 @@ func (s *memoHandler) CreateMemo() echo.HandlerFunc {
 		newMemo, err := model.CreateMemo(memo)
 
 		if err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, newMemo)
@@ -55,8 +56,8 @@ func (s *memoHandler) GetMemo() echo.HandlerFunc {
 		memo, err := model.GetMemo(userID, memoID)
 
 		if err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, memo)
@@ -72,7 +73,8 @@ func (s *memoHandler) MemoList() echo.HandlerFunc {
 		memos, err := model.MemoList(userID)
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, memos)
@@ -85,8 +87,8 @@ func (s *memoHandler) UpdateMemo() echo.HandlerFunc {
 		newMemo := model.Memo{}
 
 		if err := c.Bind(&newMemo); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		newMemo.ID = c.Param("memoID")
@@ -96,7 +98,8 @@ func (s *memoHandler) UpdateMemo() echo.HandlerFunc {
 		newMemo, err := model.UpdateMemo(newMemo)
 
 		if err != nil {
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, newMemo)
@@ -111,8 +114,8 @@ func (s *memoHandler) DeleteMemo() echo.HandlerFunc {
 
 		model := model.MemoDB{DB: s.DB}
 		if err := model.DeleteMemo(userID, memoID); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -125,8 +128,8 @@ func (s *memoHandler) AddMemoToFolder() echo.HandlerFunc {
 		memo := model.Memo{}
 
 		if err := c.Bind(&memo); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		memo.ID = c.Param("memoID")
@@ -135,8 +138,8 @@ func (s *memoHandler) AddMemoToFolder() echo.HandlerFunc {
 		model := model.MemoDB{DB: s.DB}
 
 		if err := model.AddMemoToFolder(memo); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)

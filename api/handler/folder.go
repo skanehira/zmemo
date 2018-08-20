@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"zmemo/api/common"
+
 	"zmemo/api/model"
 
+	logger "github.com/Sirupsen/logrus"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 )
@@ -24,15 +25,16 @@ func (s *folderHandler) CreateFolder() echo.HandlerFunc {
 		folder := model.Folder{}
 
 		if err := c.Bind(&folder); err != nil {
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(common.ErrInvalidPostData))
 		}
 
 		// フォルダ作成
 		model := model.FolderDB{DB: s.DB}
 		folder, err := model.CreateFolder(folder)
 		if err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, folder)
@@ -49,8 +51,8 @@ func (s *folderHandler) GetFolder() echo.HandlerFunc {
 		folder, err := model.GetFolder(userID, folderID)
 
 		if err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, folder)
@@ -66,8 +68,8 @@ func (s *folderHandler) FolderList() echo.HandlerFunc {
 		folders, err := model.FolderList(userID)
 
 		if err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.JSON(http.StatusOK, folders)
@@ -79,8 +81,8 @@ func (s *folderHandler) UpdateFolder() echo.HandlerFunc {
 		folder := model.Folder{}
 
 		if err := c.Bind(&folder); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData.Error()))
+			logger.Error(common.WrapError(err))
+			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData))
 		}
 
 		folder.ID = c.Param("folderID")
@@ -89,8 +91,8 @@ func (s *folderHandler) UpdateFolder() echo.HandlerFunc {
 		model := model.FolderDB{DB: s.DB}
 
 		if err := model.UpdateFolder(folder); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)
@@ -104,8 +106,8 @@ func (s *folderHandler) DeleteFolder() echo.HandlerFunc {
 
 		model := model.FolderDB{DB: s.DB}
 		if err := model.DeleteFolder(userID, folderID); err != nil {
-			log.Println("error: " + err.Error())
-			return c.JSON(common.GetErrorCode(err), common.NewError(err.Error()))
+			logger.Error(err)
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
 		return c.NoContent(http.StatusOK)

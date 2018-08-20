@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"zmemo/api/config"
 	"zmemo/api/logger"
@@ -39,7 +38,7 @@ func main() {
 		errors := []error{}
 
 		if "create" == flag.Args()[0] {
-			log.Print("info: start create tables...")
+			logger.Info("info: start create tables...")
 
 			if err := db.AutoMigrate(model.Memo{}).Error; err != nil {
 				errors = append(errors, err)
@@ -53,14 +52,14 @@ func main() {
 
 			// エラーがない場合
 			if len(errors) < 1 {
-				log.Printf("info: end create tables...")
+				logger.Info("info: end create tables...")
 			}
 
 			// db.AutoMigrate(model.Memo{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 			// db.AutoMigrate(model.Folder{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 			// db.AutoMigrate(model.Users{}).AddForeignKey("user_name", "users(user_name)", "RESTRICT", "RESTRICT")
 		} else if "drop" == flag.Args()[0] {
-			log.Print("info: start drop tables...")
+			logger.Info("info: start drop tables...")
 
 			if err := db.DropTableIfExists(model.Memo{}).Error; err != nil {
 				errors = append(errors, err)
@@ -74,12 +73,12 @@ func main() {
 
 			// エラーがない場合
 			if len(errors) < 1 {
-				log.Printf("info: end drop tables...")
+				logger.Info("info: end drop tables...")
 			}
 		}
 
 		for _, err := range errors {
-			log.Printf("error: %s", err)
+			logger.Errorf("%s\n", err)
 		}
 
 		os.Exit(0)
