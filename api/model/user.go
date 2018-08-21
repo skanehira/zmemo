@@ -28,17 +28,49 @@ type UserDB struct {
 	DB *gorm.DB
 }
 
-// Validation user data validate
-func (u *User) Validation() error {
-	if u.Password != "" || common.ValidPassword.MatchString(u.Password) {
-		return common.ErrInvalidPassword
-
+// UserIDValidation user id validate
+func UserIDValidation(id string) error {
+	if !common.IsValidUUID(id) {
+		return common.ErrInvalidUserID
 	}
 
-	if u.Name != "" || common.IsAlphanumeric.MatchString(u.Name) {
+	return nil
+}
+
+// UserPasswordValidation password validate
+func UserPasswordValidation(u User) error {
+	if err := UserIDValidation(u.ID); err != nil {
+		return err
+	}
+
+	if u.Password == "" || !common.ValidPassword.MatchString(u.Password) {
+		return common.ErrInvalidPassword
+	}
+
+	return nil
+}
+
+// CreateValidation user create validate
+func (u *User) CreateValidation() error {
+	if u.Password == "" || !common.ValidPassword.MatchString(u.Password) {
+		return common.ErrInvalidPassword
+	}
+
+	if u.Name == "" || !common.IsAlphanumeric.MatchString(u.Name) {
 		return common.ErrInvalidUserName
 	}
 
+	return nil
+}
+
+// UpdateValidation user update validate
+func (u *User) UpdateValidation() error {
+	if u.ID == "" || !common.IsValidUUID(u.ID) {
+		return common.ErrInvalidUserID
+	}
+	if u.Name == "" {
+		return common.ErrNotFoundUserName
+	}
 	return nil
 }
 
@@ -48,19 +80,19 @@ func (d *UserDB) CreateUser(newUser User) (User, error) {
 
 	// 初期値
 	newUser.ID = common.NewUUID()
-	newUser.CreatedAt = common.GetTime()
-	newUser.UpdatedAt = common.GetTime()
+	newUser.CreatedAt = time.Now()
+	newUser.UpdatedAt = time.Now()
 	newUser.Folders = Folders{}
 	newUser.Memos = Memos{}
 
 	// ユーザ登録
 	if err := d.DB.Create(&newUser).Error; err != nil {
-		return newUser, common.WrapError(err)
+		return newUser, common.Wrap(err)
 	}
 
 	newUser, err := d.GetUser(newUser.ID)
 	if err != nil {
-		return newUser, common.WrapError(err)
+		return newUser, common.Wrap(err)
 	}
 
 	logger.Info("CreateUser() is end")
@@ -81,7 +113,7 @@ func (d *UserDB) GetUser(id string) (User, error) {
 			err = common.ErrNotFoundUser
 		}
 
-		return user, common.WrapError(err)
+		return user, common.Wrap(err)
 	}
 
 	user.Memos = memos
@@ -101,8 +133,8 @@ func (d *UserDB) UpdateUser(user User) (User, error) {
 		return user, err
 	}
 
-	if err := d.DB.Model(&user).Updates(map[string]interface{}{"name": user.Name, "updated_at": common.GetTime()}).Error; err != nil {
-		return user, common.WrapError(err)
+	if err := d.DB.Model(&user).Updates(map[string]interface{}{"name": user.Name, "updated_at": time.Now()}).Error; err != nil {
+		return user, common.Wrap(err)
 	}
 
 	// 更新後のデータを返却する
@@ -134,32 +166,32 @@ func (d *UserDB) DeleteUser(id string) error {
 	// delete memo
 	if err := m.DeleteAllMemo(id); err != nil {
 		if err := db.Rollback().Error; err != nil {
-			return common.WrapError(err)
+			return common.Wrap(err)
 		}
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	// delete folder
 	if err := f.DeleteAllFolder(id); err != nil {
 		if err := db.Rollback().Error; err != nil {
-			return common.WrapError(err)
+			return common.Wrap(err)
 		}
 
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	// delete user
 	if err := db.Delete(&user).Error; err != nil {
 		if err := db.Rollback().Error; err != nil {
-			return common.WrapError(err)
+			return common.Wrap(err)
 		}
 
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	// db commit
 	if err := db.Commit().Error; err != nil {
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	logger.Info("DeleteUser() is end")
@@ -174,10 +206,10 @@ func (d *UserDB) UpdatePassword(user User) error {
 		return err
 	}
 
-	newData := map[string]interface{}{"updated_at": common.GetTime(), "password": user.Password}
+	newData := map[string]interface{}{"updated_at": time.Now(), "password": user.Password}
 
 	if err := d.DB.Model(&user).Where("id = ?", user.ID).Updates(newData).Error; err != nil {
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	return nil
@@ -188,7 +220,7 @@ func (d *UserDB) UserList() (Users, error) {
 	users := Users{}
 
 	if err := d.DB.Preload("Folders").Preload("Memos").Find(&users).Error; err != nil {
-		return users, common.WrapError(err)
+		return users, common.Wrap(err)
 	}
 
 	return users, nil
@@ -202,7 +234,7 @@ func (d *UserDB) UserLogin(user User) error {
 		if gorm.IsRecordNotFoundError(err) {
 			err = common.ErrNotFoundUser
 		}
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	return nil

@@ -26,15 +26,15 @@ func (s *userHandler) CreateUser() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err))
 		}
 
 		// データバリデーション
-		// if err := user.Validation(); err != nil {
-		// 	logger.Error(err)
-		// 	return c.JSON(common.GetErrorCode(err), common.NewError(err))
-		// }
+		if err := user.CreateValidation(); err != nil {
+			logger.Error(common.Wrap(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		}
 
 		// ユーザ作成
 		model := model.UserDB{DB: s.DB}
@@ -57,10 +57,15 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData))
 		}
 		user.ID = c.Param("userID")
+
+		if err := user.UpdateValidation(); err != nil {
+			logger.Error(common.Wrap(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		}
 
 		// ユーザ情報更新
 		model := model.UserDB{DB: s.DB}
@@ -79,6 +84,11 @@ func (s *userHandler) UpdateUser() echo.HandlerFunc {
 func (s *userHandler) DeleteUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Param("userID")
+
+		if err := model.UserIDValidation(userID); err != nil {
+			logger.Error(common.Wrap(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		}
 
 		// ユーザ削除
 		model := model.UserDB{DB: s.DB}
@@ -99,10 +109,15 @@ func (s *userHandler) UpdatePassword() echo.HandlerFunc {
 
 		// jsonデータ取得
 		if err := c.Bind(&user); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(err))
 		}
 		user.ID = c.Param("userID")
+
+		if err := model.UserPasswordValidation(user); err != nil {
+			logger.Error(common.Wrap(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		}
 
 		// ユーザパスワード変更
 		model := model.UserDB{DB: s.DB}
@@ -119,6 +134,11 @@ func (s *userHandler) UpdatePassword() echo.HandlerFunc {
 func (s *userHandler) GetUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := c.Param("userID")
+
+		if err := model.UserIDValidation(userID); err != nil {
+			logger.Error(common.Wrap(err))
+			return c.JSON(common.GetErrorCode(err), common.NewError(err))
+		}
 
 		// ユーザ情報取得
 		model := model.UserDB{DB: s.DB}

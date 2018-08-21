@@ -27,8 +27,8 @@ type Folders []Folder
 func (d *FolderDB) CreateFolder(f Folder) (Folder, error) {
 	// 初期値
 	f.ID = common.NewUUID()
-	f.CreatedAt = common.GetTime()
-	f.UpdatedAt = common.GetTime()
+	f.CreatedAt = time.Now()
+	f.UpdatedAt = time.Now()
 
 	if err := d.DB.Create(&f).Error; err != nil {
 		return f, err
@@ -79,7 +79,7 @@ func (d *FolderDB) UpdateFolder(f Folder) error {
 	}
 
 	// 更新データ
-	newData := map[string]interface{}{"folder_name": f.FolderName, "updated_at": common.GetTime()}
+	newData := map[string]interface{}{"folder_name": f.FolderName, "updated_at": time.Now()}
 
 	// フォルダを更新
 	if err := d.DB.Model(&f).Updates(newData).Error; err != nil {

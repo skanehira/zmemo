@@ -3,7 +3,6 @@ package common
 import (
 	"reflect"
 	"regexp"
-	"time"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -25,11 +24,6 @@ func StructToMap(data interface{}) map[string]interface{} {
 	return result
 }
 
-// GetTime 現在の日付を取得
-func GetTime() time.Time {
-	return time.Now()
-}
-
 // NewUUID new uuid
 func NewUUID() string {
 	uuid := uuid.Must(uuid.NewV4())
@@ -39,7 +33,7 @@ func NewUUID() string {
 var IsAlphanumeric = regexp.MustCompile(`^[a-zA-Z0-9]*$`) // 英文字3~15
 var IsNumberic = regexp.MustCompile(`^[0-9]*$`)
 var IsDate = regexp.MustCompile(`^\d{4}-\d{1,2}-\d{1,2} \d{2}:\d{2}:\d{2}$`) // yyyy-mm-dd hh:mm:ss
-var ValidPassword = regexp.MustCompile(`^[a-zA-Z0-9]*$`)                     // パスワード
+var ValidPassword = regexp.MustCompile(`^[a-zA-Z0-9]{5,}$`)                  // パスワード
 
 func IsValidPassword(password string) bool {
 	return password != "" && ValidPassword.MatchString(password)

@@ -10,6 +10,7 @@ import (
 var (
 	ErrNotFoundUserName  = errors.New("ユーザ名がありません")
 	ErrInvalidUserName   = errors.New("英数字のみを使用して下さい")
+	ErrInvalidUserID     = errors.New("ユーザIDが正しくありません")
 	ErrNotFoundPassword  = errors.New("パスワードがありません")
 	ErrInvalidPassword   = errors.New("パスワードが正しくありません")
 	ErrNotFoundDate      = errors.New("日付がありません")
@@ -37,8 +38,8 @@ func NewError(err error) ErrorMessage {
 	}
 }
 
-// WrapError error Wrapper
-func WrapError(err error) error {
+// Wrap error Wrapper
+func Wrap(err error) error {
 	return errors.Wrap(err, "")
 }
 
@@ -53,7 +54,7 @@ func GetErrorCode(err error) int {
 	case ErrInvalidUserName,
 		ErrInvalidDate, ErrInvalidPassword,
 		ErrInvalidPostData, ErrInvalidMemoID, ErrInvalidMemo,
-		ErrInvalidFolderName:
+		ErrInvalidFolderName, ErrInvalidUserID:
 		return http.StatusBadRequest
 	case ErrNotFoundUserName, ErrNotFoundDate,
 		ErrNotFoundPassword, ErrNotFuondMemoID, ErrNotFuondMemo, ErrNotFoundTitle:

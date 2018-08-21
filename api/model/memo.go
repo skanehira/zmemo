@@ -34,11 +34,11 @@ func (m *Memo) Validation() {
 func (d *MemoDB) CreateMemo(newMemo Memo) (Memo, error) {
 	// 初期値
 	newMemo.ID = common.NewUUID()
-	newMemo.CreatedAt = common.GetTime()
-	newMemo.UpdatedAt = common.GetTime()
+	newMemo.CreatedAt = time.Now()
+	newMemo.UpdatedAt = time.Now()
 
 	if err := d.DB.Create(&newMemo).Error; err != nil {
-		return newMemo, common.WrapError(err)
+		return newMemo, common.Wrap(err)
 	}
 
 	newMemo, err := d.GetMemo(newMemo.UserID, newMemo.ID)
@@ -57,7 +57,7 @@ func (d *MemoDB) GetMemo(userID, memoID string) (Memo, error) {
 		if gorm.IsRecordNotFoundError(err) {
 			err = common.ErrNotFuondMemo
 		}
-		return memo, common.WrapError(err)
+		return memo, common.Wrap(err)
 	}
 
 	return memo, nil
@@ -69,7 +69,7 @@ func (d *MemoDB) MemoList(userID string) (Memos, error) {
 	memos := Memos{}
 
 	if err := d.DB.Model(Memo{}).Where("user_id = ?", userID).Scan(&memos).Error; err != nil {
-		return memos, common.WrapError(err)
+		return memos, common.Wrap(err)
 	}
 
 	return memos, nil
@@ -84,7 +84,7 @@ func (d *MemoDB) UpdateMemo(memo Memo) (Memo, error) {
 	}
 
 	// メモデータ更新
-	newData := map[string]interface{}{"updated_at": common.GetTime()}
+	newData := map[string]interface{}{"updated_at": time.Now()}
 
 	if memo.Text != "" {
 		newData["text"] = memo.Text
@@ -95,7 +95,7 @@ func (d *MemoDB) UpdateMemo(memo Memo) (Memo, error) {
 	}
 
 	if err := d.DB.Model(&memo).Where("id = ? and user_id = ?", memo.ID, memo.UserID).Updates(newData).Error; err != nil {
-		return memo, common.WrapError(err)
+		return memo, common.Wrap(err)
 	}
 
 	// 更新後データを取得
@@ -117,7 +117,7 @@ func (d *MemoDB) DeleteMemo(userID, memoID string) error {
 	memo := Memo{ID: memoID, UserID: userID}
 
 	if err := d.DB.Delete(&memo).Error; err != nil {
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func (d *MemoDB) DeleteAllMemo(userID string) error {
 	memo := Memo{UserID: userID}
 
 	if err := d.DB.Delete(&memo).Error; err != nil {
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	return nil
@@ -142,12 +142,12 @@ func (d *MemoDB) AddMemoToFolder(m Memo) error {
 		if gorm.IsRecordNotFoundError(err) {
 			err = common.ErrNotFoundFolder
 		}
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	// update memo
 	if err := d.DB.Model(&m).UpdateColumns(common.StructToMap(&m)).Error; err != nil {
-		return common.WrapError(err)
+		return common.Wrap(err)
 	}
 
 	return nil

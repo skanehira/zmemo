@@ -25,7 +25,7 @@ func (s *folderHandler) CreateFolder() echo.HandlerFunc {
 		folder := model.Folder{}
 
 		if err := c.Bind(&folder); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(err), common.NewError(common.ErrInvalidPostData))
 		}
 
@@ -81,7 +81,7 @@ func (s *folderHandler) UpdateFolder() echo.HandlerFunc {
 		folder := model.Folder{}
 
 		if err := c.Bind(&folder); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(common.ErrInvalidPostData), common.NewError(common.ErrInvalidPostData))
 		}
 

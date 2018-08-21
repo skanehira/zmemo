@@ -26,7 +26,7 @@ func (s *memoHandler) CreateMemo() echo.HandlerFunc {
 		memo := model.Memo{}
 
 		if err := c.Bind(&memo); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
@@ -87,7 +87,7 @@ func (s *memoHandler) UpdateMemo() echo.HandlerFunc {
 		newMemo := model.Memo{}
 
 		if err := c.Bind(&newMemo); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
@@ -128,7 +128,7 @@ func (s *memoHandler) AddMemoToFolder() echo.HandlerFunc {
 		memo := model.Memo{}
 
 		if err := c.Bind(&memo); err != nil {
-			logger.Error(common.WrapError(err))
+			logger.Error(common.Wrap(err))
 			return c.JSON(common.GetErrorCode(err), common.NewError(err))
 		}
 
