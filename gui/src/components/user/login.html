@@ -1,0 +1,15 @@
+<div class="form">
+    <div class="form-title">ログイン</div>
+    <el-form :model="user" ref="user" :label-width="labelWidht">
+        <el-form-item label="ユーザ名">
+            <el-input v-model="user.userName" autofocus="true"></el-input>
+        </el-form-item>
+        <el-form-item label="パスワード">
+            <el-input type="password" v-model="user.password"></el-input>
+        </el-form-item>
+        <el-form-item class="z-center">
+            <el-button type="primary" @click="login">ログイン</el-button>
+            <el-button type="primary" @click="registUser">ユーザ登録</el-button>
+        </el-form-item>
+    </el-form>
+</div>

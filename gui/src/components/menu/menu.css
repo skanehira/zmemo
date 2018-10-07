@@ -1,0 +1,26 @@
+.el-submenu >>> .el-submenu__title {
+    font-size: 20px;
+    line-height: 52px;
+}
+
+.el-menu-item {
+    font-size: 20px;
+}
+
+.el-menu--horizontal {
+    border-bottom:0px;
+}
+
+.el-row {
+    border-bottom: solid 1px #e6e6e6;
+}
+
+.z-menu {
+    width: 380px;
+    margin-left: auto;
+}
+
+.z-logo {
+    width: 155px;
+    padding: 8px 0px 0px 7px;
+}

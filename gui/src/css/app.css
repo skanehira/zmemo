@@ -1,0 +1,29 @@
+@font-face {
+    font-family: 'Source Sans Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-stretch: 400;
+    src: url('../font/Gothic-ExtraLight.otf');
+}
+
+body {
+    font-size: 20px;
+    font-family: 'Source Sans Pro';
+    margin: 0;
+}
+
+.el-input__inner {
+    font-family: 'Source Sans Pro';
+}
+
+.el-textarea__inner {
+    font-family: 'Source Sans Pro';
+}
+
+.el-button {
+    font-family: 'Source Sans Pro';
+}
+
+.z-center {
+    text-align:center;
+}

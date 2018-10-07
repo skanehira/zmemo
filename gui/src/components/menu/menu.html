@@ -1,0 +1,18 @@
+<div>
+    <el-row>
+        <el-col :span="5">
+            <img @click="handleSelect()" class="z-logo" src="../../img/logo.png">
+        </el-col>
+        <el-col :span="19">
+            <el-menu mode="horizontal" @select="handleSelect" style="float: right;">
+                <el-submenu v-for="menu in menus" :key="menu.name" :index="menu.name">
+                    <template slot="title">
+                        <i :class="menu.icon"></i>
+                        <span>{{menu.name}}</span>
+                    </template>
+                    <el-menu-item v-for="submenu in menu.submenus" :key="submenu.name" :index="submenu.path">{{submenu.name}}</el-menu-item>
+                </el-submenu>
+            </el-menu>
+        </el-col>
+    </el-row>
+</div>

@@ -1,0 +1,11 @@
+<div>
+    <el-row class="scroll-container">
+        <el-col :span="8" v-for="(folder, key) in folderList" :key="key">
+            <el-card class="box-card" shadow="hover" draggable="true">
+                <i class="ion-ios-folder"></i>
+                <span>{{folder.folderName}}</span>
+                <el-button style="float: right; padding: 3px 0" type="text" @click="deleteFolder(folder)">削除</el-button>
+            </el-card>
+        </el-col>
+    </el-row>
+</div>

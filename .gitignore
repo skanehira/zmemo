@@ -1,0 +1,4 @@
+.DS_Store
+docker/mysql.storage/
+zmemo
+node_modules

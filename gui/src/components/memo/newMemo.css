@@ -1,0 +1,21 @@
+.el-dialog__wrapper >>> .el-dialog__title {
+    color:#fff;
+    font-weight: bold;
+}
+
+.el-dialog__wrapper >>> .el-dialog__header {
+    padding: 20px 20px 20px;
+    background-color: #409EFF;
+}
+
+.el-dialog__wrapper >>> .el-dialog__body {
+    padding: 20px 20px;
+}
+
+.el-dialog__wrapper >>> .el-dialog__footer {
+    text-align: center;
+}
+
+.el-dialog__wrapper >>> .el-form-item__label {
+    font-size: 18px;
+}
